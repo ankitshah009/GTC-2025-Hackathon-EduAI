@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     CONTENT_CACHE_TTL: int = 3600  # Cache TTL in seconds (1 hour)
     
     # Mock mode for development
-    USE_MOCK_DATA: bool = True  # Set to False in production to use real API
+    USE_MOCK_DATA: bool = True  # Will use mock data even if API key is provided
     
     class Config:
         env_file = ".env"

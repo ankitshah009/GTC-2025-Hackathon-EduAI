@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import Head from 'next/head';
 import Layout from '../components/Layout';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 export default function ContentGenerator() {
   const [topic, setTopic] = useState('');
@@ -14,6 +16,7 @@ export default function ContentGenerator() {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setContent(null);
     
     try {
       const response = await fetch('/api/generate-content', {
@@ -29,12 +32,14 @@ export default function ContentGenerator() {
       });
       
       if (!response.ok) {
-        throw new Error('Failed to generate content');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate content');
       }
       
       const data = await response.json();
       setContent(data);
     } catch (err) {
+      console.error('Error in content generation:', err);
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
@@ -130,12 +135,10 @@ export default function ContentGenerator() {
           {content && (
             <div className="result-container mt-8">
               <h3 className="text-xl font-bold mb-4 text-primary-600">Generated Content</h3>
-              <div className="prose prose-slate max-w-none">
-                {content.content.split('\n').map((paragraph, index) => (
-                  <p key={index} className="mb-4">
-                    {paragraph}
-                  </p>
-                ))}
+              <div className="prose prose-slate max-w-none bg-white border border-gray-200 rounded-lg p-6">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {content.content}
+                </ReactMarkdown>
               </div>
             </div>
           )}
