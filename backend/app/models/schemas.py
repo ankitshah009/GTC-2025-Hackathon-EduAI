@@ -78,6 +78,21 @@ class ImageResponse(BaseModel):
             }
         }
 
+class GeminiImageResponse(BaseModel):
+    """Response model for Gemini image generation"""
+    success: bool = Field(..., description="Flag indicating if the image generation was successful")
+    image_url: Optional[str] = Field(None, description="URL to the generated image (if successful)")
+    error: Optional[str] = Field(None, description="Error message (if failed)")
+    
+    class Config:
+        schema_extra = {
+            "example": {
+                "success": True,
+                "image_url": "https://example.com/generated-image.jpg",
+                "error": None
+            }
+        }
+
 class ErrorResponse(BaseModel):
     """Error response model"""
     error: str = Field(..., description="Error message")

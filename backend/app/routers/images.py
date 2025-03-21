@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
-from app.models.schemas import ImageGenerationRequest, ImageResponse, ErrorResponse
+from app.models.schemas import ImageGenerationRequest, ImageResponse, GeminiImageResponse, ErrorResponse
 from app.services.image_service import ImageService
 from config.settings import get_settings
 from typing import Dict, Any
@@ -34,7 +34,7 @@ async def generate_image(request: ImageGenerationRequest, settings=Depends(get_s
             detail=f"Failed to generate image. Please try again."
         )
 
-@router.post("/generate-gemini", responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}})
+@router.post("/generate-gemini", response_model=GeminiImageResponse, responses={400: {"model": ErrorResponse}, 500: {"model": ErrorResponse}})
 async def generate_gemini_image(request: ImageGenerationRequest, settings=Depends(get_settings)):
     """
     Generate an educational image based on a text prompt using Google Gemini API.
