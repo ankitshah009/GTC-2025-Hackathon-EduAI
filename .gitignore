@@ -71,3 +71,6 @@ coverage.xml
 
 # Docker
 .docker/
+
+# Generated content
+backend/static/generated_images/

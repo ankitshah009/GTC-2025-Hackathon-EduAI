@@ -1,39 +1,47 @@
+import fetch from 'node-fetch';
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
+    return res.status(405).json({ 
+      success: false, 
+      error: 'Method not allowed' 
+    });
   }
 
+  // Get the prompt from the request body
+  const { prompt, timestamp } = req.body;
+  
+  if (!prompt) {
+    console.error('Missing prompt in request body');
+    return res.status(400).json({ 
+      success: false, 
+      image_url: null, 
+      error: 'Missing prompt' 
+    });
+  }
+
+  console.log(`Making request to backend image API: ${process.env.BACKEND_API_URL || 'http://127.0.0.1:8000'}/api/images/generate-gemini`);
+  console.log(`Prompt: ${prompt}`);
+  
   try {
-    const { prompt } = req.body;
-
-    if (!prompt) {
-      return res.status(400).json({ 
-        success: false,
-        image_url: null,
-        error: 'Missing prompt field' 
-      });
-    }
-
-    // Call the backend Gemini image generation API
-    // Always use IPv4 (127.0.0.1) instead of localhost to avoid IPv6 issues
     const backendBaseUrl = process.env.BACKEND_API_URL || 'http://127.0.0.1:8000';
-    const apiUrl = `${backendBaseUrl}/api/images/generate-gemini`;
     
-    console.log(`Making request to backend image API: ${apiUrl}`);
-    console.log(`Prompt: ${prompt}`);
-    
-    // Make the request with proper error handling
+    // Make the request to the backend with a timeout
     let response;
     try {
-      response = await fetch(apiUrl, {
+      response = await fetch(`${backendBaseUrl}/api/images/generate-gemini`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt: prompt,
+          timestamp: timestamp || Date.now()
+        }),
+        timeout: 30000 // 30 second timeout
       });
     } catch (fetchError) {
-      console.error(`Network error calling backend: ${fetchError.message}`);
+      console.error(`Network error: ${fetchError.message}`);
       return res.status(500).json({
         success: false,
         image_url: null,
@@ -84,9 +92,12 @@ export default async function handler(req, res) {
       });
     }
 
+    // Add a random query string to prevent caching
+    const cacheBuster = `?t=${Date.now()}&r=${Math.random().toString(36).substring(7)}`;
+    
     // Use our proxy instead of direct backend URL
     // This prevents CORS issues when loading images from another domain
-    const proxyUrl = `/api/proxy-image?imagePath=${encodeURIComponent(data.image_url)}`;
+    const proxyUrl = `/api/proxy-image?imagePath=${encodeURIComponent(data.image_url)}${cacheBuster}`;
     console.log('Proxied image URL:', proxyUrl);
 
     // Return the proxied image URL to the frontend

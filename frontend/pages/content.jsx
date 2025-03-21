@@ -11,9 +11,10 @@ export default function ContentGenerator() {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
-  const [generatingImage, setGeneratingImage] = useState(false);
   const [generatedImages, setGeneratedImages] = useState({});
+  const [generatingImage, setGeneratingImage] = useState(false);
   const [imageError, setImageError] = useState(null);
+  const [loadingImage, setLoadingImage] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -46,6 +47,7 @@ export default function ContentGenerator() {
       // Auto-generate images if there are prompts
       if (data.imagePrompts && data.imagePrompts.length > 0) {
         // Generate the first image immediately
+        console.log('Auto-generating first image...');
         handleGenerateImage(data.imagePrompts[0]);
       }
     } catch (err) {
@@ -59,15 +61,24 @@ export default function ContentGenerator() {
   const handleGenerateImage = async (prompt) => {
     setGeneratingImage(true);
     setImageError(null);
+    setLoadingImage(true);
     
     try {
       console.log(`Generating image for prompt: ${prompt}`);
+      
+      // Add timestamp to avoid cache issues
+      const timestamp = new Date().getTime();
+      console.log(`Adding timestamp: ${timestamp}`);
+      
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ 
+          prompt,
+          timestamp
+        }),
       });
       
       // Check if the response is OK first
@@ -93,10 +104,17 @@ export default function ContentGenerator() {
           throw new Error('No image URL returned from API');
         }
         
+        // Log all the image URLs for debugging
+        console.log('Proxied URL:', data.image_url);
+        console.log('Original URL:', data.original_url);
+        
+        // Add a random query parameter to force image reload
+        const cacheBuster = `?cache=${Math.random().toString(36).substring(7)}`;
+        
         // Immediately update state with the image URL
         setGeneratedImages(prevState => ({
           ...prevState,
-          [prompt]: data.image_url
+          [prompt]: `${data.image_url}${cacheBuster}`
         }));
       } else {
         const errorMsg = data?.error || 'Failed to generate image';
@@ -108,6 +126,7 @@ export default function ContentGenerator() {
       setImageError(err.message || 'Failed to generate image');
     } finally {
       setGeneratingImage(false);
+      setLoadingImage(false);
     }
   };
 
@@ -115,9 +134,11 @@ export default function ContentGenerator() {
   useEffect(() => {
     const generateAllImages = async () => {
       if (content && content.imagePrompts && content.imagePrompts.length > 0) {
+        console.log('Auto-generating all images...');
         // Generate all images in sequence
         for (const prompt of content.imagePrompts) {
           if (!generatedImages[prompt]) {
+            console.log(`Auto-generating image for prompt: ${prompt}`);
             await handleGenerateImage(prompt);
           }
         }
@@ -235,22 +256,29 @@ export default function ContentGenerator() {
                           <p className="font-medium">Prompt #{index + 1}</p>
                           {generatedImages[prompt] ? (
                             <div className="mt-2">
-                              <p className="text-xs text-blue-600 mb-1">Image URL: {generatedImages[prompt]}</p>
-                              <div className="border border-gray-200 rounded shadow-md p-2 overflow-hidden">
-                                <img 
-                                  src={generatedImages[prompt]} 
+                              <div className="relative w-full max-w-screen-lg">
+                                <img
+                                  src={`${generatedImages[prompt]}?cache=${Date.now()}`}
                                   alt={`Generated image for: ${prompt}`}
                                   width={600}
                                   height={400}
                                   loading="lazy"
                                   className="max-w-full h-auto rounded"
                                   onError={(e) => {
-                                    console.error('Failed to load image:', e.target.src);
-                                    e.target.onerror = null; 
-                                    e.target.src = 'https://via.placeholder.com/400x300?text=Image+Load+Error';
-                                    e.target.className += ' border-red-500';
+                                    console.error('Image failed to load, retrying...');
+                                    // Add a small delay before trying again
+                                    setTimeout(() => {
+                                      // Change the src to trigger a reload with a new cache buster
+                                      e.target.src = `${generatedImages[prompt].split('?')[0]}?cache=${Date.now()}`;
+                                    }, 1000);
                                   }}
                                 />
+                                <button
+                                  className="absolute bottom-2 right-2 px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-300 text-sm"
+                                  onClick={() => handleGenerateImage(prompt)}
+                                >
+                                  Regenerate
+                                </button>
                               </div>
                               <p className="text-sm text-gray-500 mt-1">{prompt}</p>
                             </div>
