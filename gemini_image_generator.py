@@ -1,3 +1,14 @@
+"""
+Standalone script for testing Google Gemini image generation.
+
+NOTE: This is a standalone script for testing. The actual functionality
+has been integrated into the backend at:
+- app/gemini_api/gemini_image_client.py (API client)
+- app/services/image_service.py (service layer)
+
+To use this in the backend, call ImageService.generate_gemini_image()
+"""
+
 import base64
 import os
 import uuid

@@ -46,6 +46,9 @@ class Settings(BaseSettings):
     IMAGE_MODEL_ID: str = "stable-diffusion-xl"
     IMAGE_SIZE: str = "1024x1024"
     
+    # File paths
+    STATIC_DIR: str = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "static")
+    
     # Cache settings
     CONTENT_CACHE_TTL: int = 3600  # Cache TTL in seconds (1 hour)
     
@@ -59,6 +62,10 @@ class Settings(BaseSettings):
         
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
+        
+        # Ensure the static directory exists
+        os.makedirs(self.STATIC_DIR, exist_ok=True)
+        
         # Use NVIDIA_API_KEY if LLM_API_KEY is not provided
         if not self.LLM_API_KEY and self.NVIDIA_API_KEY:
             self.LLM_API_KEY = self.NVIDIA_API_KEY
