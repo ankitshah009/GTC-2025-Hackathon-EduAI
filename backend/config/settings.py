@@ -19,7 +19,13 @@ class Settings(BaseSettings):
     LLM_API_TYPE: str = "openai"  # "openai" or "openai_compatible"
     LLM_API_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     LLM_API_KEY: Optional[str] = None
-    NVIDIA_API_KEY: Optional[str] = None  # Added to match env file
+    
+    # NVIDIA API settings
+    NVIDIA_API_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
+    NVIDIA_API_KEY: Optional[str] = None
+    
+    # Google Gemini API settings
+    GEMINI_API_KEY: Optional[str] = None
     
     # LLM model settings
     LLM_MODEL_ID: str = "nvidia/llama-3.3-nemotron-super-49b-v1"
