@@ -1,0 +1,91 @@
+Here's how to download and set up the EduAI project:
+
+1. **Download the project files**:
+   Create a new directory and download all files from the repository.
+
+2. **Project Structure**:
+```
+eduai-project/
+├── frontend/                   # React frontend (Next.js)
+│   ├── public/                 # Static assets
+│   ├── src/
+│   │   ├── components/         
+│   │   │   ├── EduAI.jsx       # Main application component
+│   │   │   └── MarkdownRenderer.jsx  
+│   │   ├── services/           
+│   │   │   └── api.js          # API service
+│   │   ├── pages/              
+│   │   │   ├── index.js        # Main page
+│   │   │   ├── _app.js         # App wrapper
+│   │   │   └── api/placeholder/[width]/[height].js # Placeholder image API
+│   │   └── styles/             
+│   │       └── globals.css     # Global styles
+│   ├── package.json            # Frontend dependencies
+│   ├── next.config.js          # Next.js configuration
+│   ├── tailwind.config.js      # Tailwind CSS configuration
+│   ├── postcss.config.js       # PostCSS configuration
+│   ├── .env.example            # Environment variables template
+│   └── Dockerfile              # Docker configuration for frontend
+│
+├── backend/                    # Python backend (FastAPI)
+│   ├── app/                    
+│   │   ├── __init__.py         
+│   │   ├── main.py             # FastAPI main application
+│   │   ├── routers/            
+│   │   │   ├── __init__.py
+│   │   │   ├── content.py      # Content generation endpoints
+│   │   │   └── images.py       # Image generation endpoints
+│   │   ├── services/           
+│   │   │   ├── __init__.py
+│   │   │   ├── content_service.py    
+│   │   │   └── image_service.py      
+│   │   ├── models/             
+│   │   │   ├── __init__.py
+│   │   │   └── schemas.py      # Pydantic schemas
+│   │   └── nvidia_api/         
+│   │       ├── __init__.py
+│   │       ├── llm_client.py   # NVIDIA LLM client
+│   │       └── image_client.py # NVIDIA image client
+│   ├── config/                 
+│   │   ├── __init__.py
+│   │   └── settings.py         # Application settings
+│   ├── requirements.txt        # Python dependencies
+│   ├── .env.example            # Environment variables template
+│   └── Dockerfile              # Docker configuration for backend
+│
+├── docker-compose.yml          # Docker Compose configuration
+├── .gitignore                  # Git ignore file
+├── README.md                   # Project documentation
+└── setup.sh                    # Setup script
+```
+
+3. **Setup Instructions**:
+
+   a. Ensure you have Docker and Docker Compose installed on your system.
+   
+   b. Run the setup script:
+   ```bash
+   chmod +x setup.sh
+   ./setup.sh
+   ```
+   
+   c. Or manually set up:
+   ```bash
+   # Create environment files
+   cp backend/.env.example backend/.env
+   cp frontend/.env.example frontend/.env
+   
+   # Start the application
+   docker-compose up -d
+   ```
+
+4. **Access the application**:
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Documentation: http://localhost:8000/docs
+
+5. **To use with actual NVIDIA API**:
+   - Get your NVIDIA API key
+   - Update `NVIDIA_API_KEY` in `backend/.env`
+   - Set `USE_MOCK_DATA=False` in `backend/.env`
+   - Restart the application: `docker-compose down && docker-compose up -d`

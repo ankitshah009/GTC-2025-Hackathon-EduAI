@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EduAI - Streaming Demo</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+        
+        .input-section {
+            background-color: #f5f5f5;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        input, select {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background-color: #2980b9;
+        }
+        
+        .content-section {
+            margin-top: 20px;
+        }
+        
+        #status {
+            font-style: italic;
+            color: #7f8c8d;
+            margin-bottom: 10px;
+        }
+        
+        #content-container {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            min-height: 200px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+        
+        .image-prompts-container {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+        }
+        
+        .image-prompts-container h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+    <h1>EduAI - Streaming Content Generation Demo</h1>
+    
+    <div class="input-section">
+        <label for="topic-input">Educational Topic:</label>
+        <input type="text" id="topic-input" placeholder="e.g., photosynthesis, climate change, quantum physics">
+        
+        <label for="audience-select">Target Audience:</label>
+        <select id="audience-select">
+            <option value="elementary">Elementary School</option>
+            <option value="middle school">Middle School</option>
+            <option value="high school" selected>High School</option>
+            <option value="college">College</option>
+            <option value="graduate">Graduate Level</option>
+        </select>
+        
+        <button id="generate-btn">Generate Content</button>
+    </div>
+    
+    <div class="content-section">
+        <div id="status">Ready to generate content...</div>
+        <div id="content-container"></div>
+    </div>
+    
+    <script src="streaming-demo.js"></script>
+</body>
+</html>
