@@ -11,13 +11,29 @@ class LLMClient:
     def __init__(self, settings: Settings):
         self.settings = settings
         self.api_type = settings.LLM_API_TYPE
+        
+        # Print debugging information
+        print(f"DEBUG LLM Client - API Base URL: {settings.LLM_API_BASE_URL}")
+        print(f"DEBUG LLM Client - API Key Present: {settings.LLM_API_KEY is not None}")
+        print(f"DEBUG LLM Client - NVIDIA API Key Present: {settings.NVIDIA_API_KEY is not None}")
+        print(f"DEBUG LLM Client - Model ID: {settings.LLM_MODEL_ID}")
+        
+        # Use NVIDIA_API_KEY if LLM_API_KEY is not set
+        api_key = settings.LLM_API_KEY
+        if not api_key and settings.NVIDIA_API_KEY:
+            api_key = settings.NVIDIA_API_KEY
+            print("DEBUG LLM Client: Using NVIDIA_API_KEY instead of LLM_API_KEY")
+        
+        if not api_key:
+            print("WARNING: No API key provided for LLM client")
+        
         self.client = OpenAI(
             base_url=settings.LLM_API_BASE_URL,
-            api_key=settings.LLM_API_KEY
+            api_key=api_key
         )
         self.async_client = AsyncOpenAI(
             base_url=settings.LLM_API_BASE_URL,
-            api_key=settings.LLM_API_KEY
+            api_key=api_key
         )
         self.model_id = settings.LLM_MODEL_ID
     
@@ -35,8 +51,12 @@ class LLMClient:
         if self.settings.USE_MOCK_DATA:
             raise Exception("API should not be called in mock mode")
         
-        return await self._generate_text_openai(prompt)
-    
+        try:
+            return await self._generate_text_openai(prompt)
+        except Exception as e:
+            print(f"Error generating text with OpenAI API: {str(e)}")
+            raise
+        
     async def _generate_text_openai(self, prompt: str) -> str:
         """Generate text using OpenAI API"""
         try:

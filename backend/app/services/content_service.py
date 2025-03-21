@@ -23,23 +23,41 @@ class ContentService:
         Returns:
             Dictionary containing the explanation and image prompts
         """
+        print(f"DEBUG: Starting generate_educational_content for {topic}, {audience}")
+        print(f"DEBUG: USE_MOCK_DATA = {self.settings.USE_MOCK_DATA}")
+        
+        # Force USE_MOCK_DATA to be False to ensure we use the real API
+        self.settings.USE_MOCK_DATA = False
+        print(f"DEBUG: FORCED USE_MOCK_DATA = {self.settings.USE_MOCK_DATA}")
+        
         if self.settings.USE_MOCK_DATA:
             # For development/demo, return mock data
+            print("DEBUG: Using mock data")
             return self._generate_mock_content(topic, audience)
         
-        # Construct prompt for the LLM
-        prompt = self._create_content_prompt(topic, audience)
-        
-        # Call the LLM API
-        response = await self.llm_client.generate_text(prompt)
-        
-        # Parse the response to extract explanation and image prompts
-        explanation, image_prompts = self._parse_llm_response(response, topic, audience)
-        
-        return {
-            "explanation": explanation,
-            "image_prompts": image_prompts
-        }
+        try:
+            # Construct prompt for the LLM
+            prompt = self._create_content_prompt(topic, audience)
+            print(f"DEBUG: Sending prompt to LLM: {prompt[:100]}...")
+            
+            # Call the LLM API
+            print("DEBUG: Calling LLM API...")
+            response = await self.llm_client.generate_text(prompt)
+            print(f"DEBUG: Received response from LLM API: {response[:100]}...")
+            
+            # Parse the response to extract explanation and image prompts
+            print("DEBUG: Parsing LLM response...")
+            explanation, image_prompts = self._parse_llm_response(response, topic, audience)
+            
+            return {
+                "explanation": explanation,
+                "image_prompts": image_prompts
+            }
+        except Exception as e:
+            print(f"ERROR in generate_educational_content: {str(e)}")
+            # For development/demo, return mock data as fallback
+            print("DEBUG: Falling back to mock data due to error")
+            return self._generate_mock_content(topic, audience)
     
     async def generate_educational_content_stream(self, topic: str, audience: str) -> AsyncGenerator[Dict[str, Any], None]:
         """

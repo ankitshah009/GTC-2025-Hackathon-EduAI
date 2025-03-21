@@ -106,6 +106,10 @@ run_backend() {
   print_info "Starting backend server on port 8000..."
   cd backend || exit
   
+  # Set USE_MOCK_DATA to False explicitly in environment
+  export USE_MOCK_DATA=False
+  print_info "Setting USE_MOCK_DATA=False to use real API"
+  
   # Activate virtual environment and run server
   if [ -d "venv" ]; then
     source venv/bin/activate

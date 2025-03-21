@@ -23,15 +23,18 @@ class Settings(BaseSettings):
     
     # LLM model settings
     LLM_MODEL_ID: str = "nvidia/llama-3.3-nemotron-super-49b-v1"
-    LLM_TEMPERATURE: float = 0.6
-    LLM_TOP_P: float = 0.95
+    LLM_TEMPERATURE: float = 0.7  # Slightly increase for more creative output
+    LLM_TOP_P: float = 0.9
     LLM_MAX_TOKENS: int = 4096
-    LLM_FREQUENCY_PENALTY: float = 0
-    LLM_PRESENCE_PENALTY: float = 0
+    LLM_FREQUENCY_PENALTY: float = 0.1  # Add slight penalty to avoid repetitive text
+    LLM_PRESENCE_PENALTY: float = 0.1  # Add slight penalty to encourage diverse topics
     LLM_STREAM: bool = False  # Set to True for streaming responses in async handlers
     
     # System message for the model
-    LLM_SYSTEM_MESSAGE: str = "You are an educational AI assistant designed to create high-quality content for students at various academic levels. Provide detailed and accurate information."
+    LLM_SYSTEM_MESSAGE: str = """You are an expert educational AI assistant designed to create high-quality, 
+    detailed, and thoughtful educational content. Your explanations should be comprehensive, accurate, 
+    and demonstrate deep reasoning appropriate for the target audience level. Include real-world examples, 
+    historical context when relevant, and connections to related concepts."""
     
     # Text-to-image model settings
     IMAGE_MODEL_ID: str = "stable-diffusion-xl"
