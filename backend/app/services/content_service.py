@@ -95,20 +95,37 @@ class ContentService:
     
     def _create_content_prompt(self, topic: str, audience: str) -> str:
         """Create a prompt for the LLM to generate educational content"""
+        audience_level_descriptions = {
+            "elementary": "ages 6-10, simple language, concrete examples, engaging and fun content",
+            "middle-school": "ages 11-13, moderate complexity, mix of concrete and abstract concepts, engaging examples",
+            "high-school": "ages 14-18, higher complexity, abstract concepts, real-world applications, critical thinking",
+            "college": "undergraduate level, sophisticated concepts, theoretical and practical applications, critical analysis",
+            "graduate": "graduate level, advanced concepts, research focus, critical evaluation of competing theories"
+        }
+        
+        audience_description = audience_level_descriptions.get(audience.lower(), f"{audience} level")
+        
         return f"""
-        Generate an educational lesson on {topic} for {audience} level students.
+        You are an expert educator specializing in creating high-quality, in-depth educational content for students. 
         
-        The response should include:
-        1. A detailed text explanation in markdown format with:
-           - A title and introduction
-           - Main concepts clearly explained at appropriate level for {audience} students
-           - Deeper understanding section that connects {topic} to other areas of study
+        Generate a comprehensive and insightful educational lesson on "{topic}" targeted at {audience_description} students.
         
-        2. A separate section titled "IMAGE_PROMPTS" containing exactly 3 detailed image prompts 
-           that would be useful to illustrate key concepts from this lesson. Each prompt should
-           be on a new line starting with "- " and be appropriate for the {audience} level.
+        Your response must demonstrate deep reasoning and expert knowledge on the subject. Include:
+
+        1. A detailed explanation in markdown format with:
+           - An engaging title and introduction that frames the topic in an interesting context
+           - Background/historical context for the topic when relevant
+           - Core concepts explained clearly with precise, accurate information
+           - Advanced analysis that demonstrates deeper connections and implications
+           - Practical examples or applications that make the content relatable
+           - Questions that promote critical thinking about the topic
         
-        Format the response with markdown for headings and structure.
+        2. After your main content, include a section titled "IMAGE_PROMPTS" that provides 3 detailed image prompts,
+           each on a separate line starting with "- " that would effectively illustrate key concepts from this lesson.
+           Make these image prompts specific, detailed, and appropriate for {audience} students.
+        
+        Structure your response with clear markdown formatting (headings, lists, etc.) to enhance readability.
+        Ensure all content is accurate, thoughtful, and demonstrates sophisticated reasoning about the topic.
         """
     
     def _parse_llm_response(self, response: str, topic: str, audience: str) -> tuple:
