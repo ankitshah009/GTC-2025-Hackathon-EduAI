@@ -7,6 +7,8 @@ EduAI is an AI-powered educational content generation platform that helps create
 - **Content Generation**: Generate educational content for any topic and audience level
 - **Deep Research**: Create comprehensive research content with academic references
 - **Image Generation**: Generate relevant educational diagrams and visualizations
+  - **NVIDIA API**: High-quality image generation with NVIDIA's advanced models
+  - **Google Gemini API**: State-of-the-art multimodal image generation with detailed labeling
 
 ## Project Structure
 
@@ -16,6 +18,7 @@ EduAI is an AI-powered educational content generation platform that helps create
 │   ├── app/               # Main application code
 │   │   ├── models/        # Pydantic data models
 │   │   ├── nvidia_api/    # NVIDIA API client code
+│   │   ├── gemini_api/    # Google Gemini API client code
 │   │   ├── routers/       # API route handlers
 │   │   └── services/      # Business logic services
 │   ├── config/            # Configuration settings
@@ -30,8 +33,10 @@ EduAI is an AI-powered educational content generation platform that helps create
 │   ├── styles/            # CSS styles
 │   ├── Dockerfile         # Frontend Docker configuration
 │   └── package.json       # JavaScript dependencies
+├── simple_gemini_test.py  # Standalone test for Gemini API
 ├── docker-compose.yml     # Docker Compose configuration
 ├── setup.sh               # Setup script
+├── run_backend.sh         # Script to run the backend server
 ├── test.sh                # Test script
 └── README.md              # This file
 ```
@@ -42,6 +47,8 @@ EduAI is an AI-powered educational content generation platform that helps create
 - Node.js 16+
 - npm 8+
 - Docker & Docker Compose (optional, for containerized setup)
+- Google Gemini API key for image generation
+- NVIDIA API key for alternative image generation
 
 ## Quick Start
 
@@ -49,7 +56,7 @@ The easiest way to get started is by using the setup script:
 
 ```bash
 # Make the scripts executable
-chmod +x setup.sh test.sh
+chmod +x setup.sh test.sh run_backend.sh
 
 # Run the setup script
 ./setup.sh
@@ -84,7 +91,7 @@ source venv/bin/activate
 pip install -r requirements.txt
 
 # Create .env file (copy from .env.example or create new)
-cp .env.example .env  # Edit as needed
+cp .env.example .env  # Edit as needed with your API keys
 
 # Start the backend server
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8000
@@ -137,6 +144,22 @@ The test script checks:
 - Frontend availability
 - Content generation API
 - Deep research API
+- Image generation with NVIDIA and Google Gemini
+
+### Testing Gemini Image Generation
+
+You can test the Gemini image generation separately with the provided test script:
+
+```bash
+# Set your API key as an environment variable
+export GEMINI_API_KEY=your_api_key_here
+
+# Run the test script
+python simple_gemini_test.py
+
+# Alternatively, pass the API key as an argument
+python simple_gemini_test.py your_api_key_here
+```
 
 ## Manual Testing
 
@@ -156,7 +179,7 @@ When the backend is running, you can access the API documentation at:
 ### Backend Configuration
 
 Edit the `backend/.env` file to configure:
-- API keys
+- API keys (GEMINI_API_KEY, NVIDIA_API_KEY)
 - Model settings
 - Debug mode
 - CORS settings
@@ -165,6 +188,32 @@ Edit the `backend/.env` file to configure:
 
 Edit the `frontend/.env` file to configure:
 - API URL
+
+## Image Generation Features
+
+EduAI supports two state-of-the-art image generation APIs:
+
+### NVIDIA Image Generation
+
+The NVIDIA API client is used for generating images with NVIDIA's powerful generative models. This is ideal for:
+- High-quality illustrations
+- Photorealistic renderings
+- Complex diagrams
+
+### Google Gemini Image Generation
+
+The Google Gemini API integration provides advanced multimodal image generation with:
+- Educational context enhancement
+- Accurate labeling of scientific concepts
+- Clear visual representation of complex ideas
+
+The Gemini implementation follows these steps:
+1. Receives a prompt from the user or content generation system
+2. Enhances the prompt with educational context
+3. Calls the Google Gemini API using the latest models
+4. Processes the response and extracts the generated image
+5. Saves the image with a unique identifier
+6. Returns the URL for frontend display
 
 ## Development
 
@@ -182,6 +231,19 @@ In another terminal:
 cd frontend
 npm run dev
 ```
+
+## Using the Run Script
+
+For convenience, you can use the provided run script to start the backend:
+
+```bash
+./run_backend.sh
+```
+
+This script:
+1. Activates the virtual environment
+2. Sets the necessary environment variables
+3. Starts the FastAPI server with hot reloading
 
 ## License
 
