@@ -11,12 +11,16 @@ export default function ContentGenerator() {
   const [loading, setLoading] = useState(false);
   const [content, setContent] = useState(null);
   const [error, setError] = useState(null);
+  const [generatingImage, setGeneratingImage] = useState(false);
+  const [generatedImages, setGeneratedImages] = useState({});
+  const [imageError, setImageError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     setContent(null);
+    setGeneratedImages({});
     
     try {
       const response = await fetch('/api/generate-content', {
@@ -43,6 +47,42 @@ export default function ContentGenerator() {
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGenerateImage = async (prompt) => {
+    setGeneratingImage(true);
+    setImageError(null);
+    
+    try {
+      const response = await fetch('/api/generate-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ prompt }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate image');
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setGeneratedImages({
+          ...generatedImages,
+          [prompt]: data.image_url
+        });
+      } else {
+        throw new Error(data.error || 'Failed to generate image');
+      }
+    } catch (err) {
+      console.error('Error in image generation:', err);
+      setImageError(err.message || 'Failed to generate image');
+    } finally {
+      setGeneratingImage(false);
     }
   };
 
@@ -144,11 +184,40 @@ export default function ContentGenerator() {
               {content.imagePrompts && content.imagePrompts.length > 0 && (
                 <div className="mt-6">
                   <h4 className="text-lg font-semibold mb-2">Image Prompts</h4>
-                  <ul className="list-disc pl-5 space-y-1">
+                  <ul className="list-disc pl-5 space-y-3">
                     {content.imagePrompts.map((prompt, index) => (
-                      <li key={index} className="text-gray-700">{prompt}</li>
+                      <li key={index} className="text-gray-700">
+                        <div className="flex flex-col space-y-2">
+                          <div className="flex items-center">
+                            <span>{prompt}</span>
+                            <button
+                              className="ml-3 px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
+                              onClick={() => handleGenerateImage(prompt)}
+                              disabled={generatingImage}
+                            >
+                              {generatingImage && prompt in generatedImages ? 'Generating...' : 'Generate Image'}
+                            </button>
+                          </div>
+                          
+                          {generatedImages[prompt] && (
+                            <div className="mt-2">
+                              <img 
+                                src={generatedImages[prompt]} 
+                                alt={prompt} 
+                                className="max-w-full h-auto rounded border border-gray-200"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </li>
                     ))}
                   </ul>
+                  
+                  {imageError && (
+                    <div className="mt-4 bg-red-50 border border-red-200 rounded-lg p-3 text-red-600">
+                      <p>{imageError}</p>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

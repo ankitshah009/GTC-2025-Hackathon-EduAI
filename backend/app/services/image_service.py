@@ -6,6 +6,11 @@ import asyncio
 import time
 import random
 import hashlib
+import logging
+
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
 
 class ImageService:
     """Service for educational image generation"""
@@ -50,23 +55,48 @@ class ImageService:
         Returns:
             Dictionary containing success status, image URL, and any error message
         """
-        if self.settings.USE_MOCK_DATA:
-            # For development/demo, return a placeholder image URL
-            mock_url = self._generate_mock_image(prompt)
+        logger.info(f"Starting Gemini image generation for prompt: {prompt[:50]}...")
+        logger.info(f"USE_MOCK_DATA is set to: {self.settings.USE_MOCK_DATA}")
+        
+        # Force mock mode to off for image generation
+        original_mock_setting = self.settings.USE_MOCK_DATA
+        self.settings.USE_MOCK_DATA = False
+        logger.info(f"Forced USE_MOCK_DATA to: {self.settings.USE_MOCK_DATA}")
+        
+        try:
+            if self.settings.USE_MOCK_DATA:
+                # For development/demo, return a placeholder image URL
+                logger.info("Using mock data for image generation")
+                mock_url = self._generate_mock_image(prompt)
+                return {
+                    "success": True,
+                    "image_url": mock_url,
+                    "file_path": None,
+                    "error": None
+                }
+            
+            # Enhance the prompt for educational context
+            enhanced_prompt = self._enhance_prompt(prompt)
+            logger.info(f"Enhanced prompt: {enhanced_prompt[:50]}...")
+            
+            # Call Gemini's text-to-image API
+            logger.info("Calling Gemini image client...")
+            result = await self.gemini_client.generate_image(enhanced_prompt, filename_prefix)
+            logger.info(f"Gemini image generation result: {result}")
+            
+            return result
+        except Exception as e:
+            logger.error(f"Error in generate_gemini_image: {str(e)}")
             return {
-                "success": True,
-                "image_url": mock_url,
+                "success": False,
+                "image_url": None,
                 "file_path": None,
-                "error": None
+                "error": str(e)
             }
-        
-        # Enhance the prompt for educational context
-        enhanced_prompt = self._enhance_prompt(prompt)
-        
-        # Call Gemini's text-to-image API
-        result = await self.gemini_client.generate_image(enhanced_prompt, filename_prefix)
-        
-        return result
+        finally:
+            # Restore original mock setting
+            self.settings.USE_MOCK_DATA = original_mock_setting
+            logger.info(f"Restored USE_MOCK_DATA to: {self.settings.USE_MOCK_DATA}")
     
     def _enhance_prompt(self, prompt: str) -> str:
         """

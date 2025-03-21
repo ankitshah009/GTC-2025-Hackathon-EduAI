@@ -1,5 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from pathlib import Path
+import os
 from app.routers import content, images, deep_research
 
 # Initialize FastAPI app
@@ -22,6 +25,11 @@ app.add_middleware(
 app.include_router(content.router, prefix="/api/content", tags=["content"])
 app.include_router(images.router, prefix="/api/images", tags=["images"])
 app.include_router(deep_research.router, prefix="/api/deep-research", tags=["deep-research"])
+
+# Set up static files directory
+static_directory = Path(__file__).parent / "static"
+os.makedirs(static_directory / "generated_images", exist_ok=True)
+app.mount("/static", StaticFiles(directory=str(static_directory)), name="static")
 
 @app.get("/")
 async def health_check():
