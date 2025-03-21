@@ -13,12 +13,13 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     
     # CORS settings
-    CORS_ORIGINS: List[str] = ["*"]
+    CORS_ORIGINS: Union[List[str], str] = ["*"]
     
     # LLM API settings
     LLM_API_TYPE: str = "openai"  # "openai" or "openai_compatible"
     LLM_API_BASE_URL: str = "https://integrate.api.nvidia.com/v1"
     LLM_API_KEY: Optional[str] = None
+    NVIDIA_API_KEY: Optional[str] = None  # Added to match env file
     
     # LLM model settings
     LLM_MODEL_ID: str = "nvidia/llama-3.3-nemotron-super-49b-v1"
@@ -40,12 +41,18 @@ class Settings(BaseSettings):
     CONTENT_CACHE_TTL: int = 3600  # Cache TTL in seconds (1 hour)
     
     # Mock mode for development
-    USE_MOCK_DATA: bool = True  # Will use mock data even if API key is provided
+    USE_MOCK_DATA: bool = False  # Set to False to use the real API instead of mock data
     
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
         case_sensitive = True
+        
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        # Use NVIDIA_API_KEY if LLM_API_KEY is not provided
+        if not self.LLM_API_KEY and self.NVIDIA_API_KEY:
+            self.LLM_API_KEY = self.NVIDIA_API_KEY
 
 @lru_cache()
 def get_settings() -> Settings:

@@ -140,6 +140,17 @@ export default function ContentGenerator() {
                   {content.content}
                 </ReactMarkdown>
               </div>
+              
+              {content.imagePrompts && content.imagePrompts.length > 0 && (
+                <div className="mt-6">
+                  <h4 className="text-lg font-semibold mb-2">Image Prompts</h4>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {content.imagePrompts.map((prompt, index) => (
+                      <li key={index} className="text-gray-700">{prompt}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
         </div>

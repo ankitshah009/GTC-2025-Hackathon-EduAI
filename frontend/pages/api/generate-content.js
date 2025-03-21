@@ -10,8 +10,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
-    // Get the backend API URL
-    const apiUrl = `${process.env.BACKEND_API_URL || 'http://localhost:8000'}/api/content/generate`;
+    // Hard-code the backend API URL with IPv4
+    const apiUrl = 'http://127.0.0.1:8000/api/content/generate';
     
     console.log(`Making request to backend API: ${apiUrl}`);
     
@@ -40,7 +40,8 @@ export default async function handler(req, res) {
 
     // Format it for the frontend
     return res.status(200).json({
-      content: data.explanation || 'No content generated'
+      content: data.explanation || 'No content generated',
+      imagePrompts: data.image_prompts || []
     });
   } catch (error) {
     console.error('Error generating content:', error);

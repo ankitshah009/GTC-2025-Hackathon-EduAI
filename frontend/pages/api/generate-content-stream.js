@@ -5,78 +5,84 @@ import { NextApiRequest, NextApiResponse } from 'next';
  * This proxies the request to our backend API.
  */
 export default async function handler(req, res) {
-  // Only accept POST requests
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Set headers for streaming
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const { topic, audience } = req.body;
+
+  if (!topic || !audience) {
+    res.write(`data: ${JSON.stringify({ error: 'Missing required fields' })}\n\n`);
+    res.end();
+    return;
+  }
+
   try {
-    // Get request data
-    const { topic, audience } = req.body;
+    console.log(`Streaming content for topic: ${topic}, audience: ${audience}`);
     
-    if (!topic || !audience) {
-      return res.status(400).json({ error: 'Missing required fields' });
-    }
+    // Hard-code the backend API URL with IPv4
+    const apiUrl = 'http://127.0.0.1:8000/api/content/generate/stream';
     
-    // Set up headers for server-sent events
-    res.setHeader('Content-Type', 'text/event-stream');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Connection', 'keep-alive');
+    console.log(`Making request to backend API: ${apiUrl}`);
     
-    // Get backend API URL from environment variables or use default
-    const apiUrl = `${process.env.BACKEND_API_URL || 'http://localhost:8000'}/api/content/generate/stream`;
-    
-    console.log(`Proxying streaming request to: ${apiUrl}`);
-    
-    // Make API request to backend
     const response = await fetch(apiUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
       },
       body: JSON.stringify({ topic, audience }),
     });
-    
+
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`Backend API error: ${response.status}`, errorText);
       res.write(`data: ${JSON.stringify({ error: `API error: ${response.status}` })}\n\n`);
-      return res.end();
+      res.end();
+      return;
     }
-    
-    // Stream the response from the backend to the client
+
+    // Read the response as a stream
     const reader = response.body.getReader();
-    
-    async function streamResponse() {
-      try {
-        while (true) {
-          const { done, value } = await reader.read();
-          
-          if (done) {
-            return res.end();
-          }
-          
-          // Forward the chunk directly
-          const chunk = new TextDecoder().decode(value);
-          res.write(chunk);
-          
-          // Flush the response to ensure it's sent immediately
-          if (res.flush) {
-            res.flush();
+    const decoder = new TextDecoder();
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        
+        if (done) {
+          console.log('Stream complete');
+          res.write(`data: ${JSON.stringify({ finished: true })}\n\n`);
+          res.end();
+          break;
+        }
+        
+        const chunk = decoder.decode(value, { stream: true });
+        const lines = chunk.split('\n').filter(line => line.trim() !== '');
+        
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            const data = line.slice(6);
+            res.write(`data: ${data}\n\n`);
           }
         }
-      } catch (error) {
-        console.error('Error streaming response:', error);
-        res.write(`data: ${JSON.stringify({ error: 'Error streaming response' })}\n\n`);
-        res.end();
+        
+        // Flush the response to the client
+        res.flush?.();
       }
+    } catch (error) {
+      console.error('Error processing stream:', error);
+      res.write(`data: ${JSON.stringify({ error: 'Stream processing error' })}\n\n`);
+      res.end();
     }
-    
-    await streamResponse();
-    
   } catch (error) {
-    console.error('API handler error:', error);
-    res.write(`data: ${JSON.stringify({ error: error.message || 'An unexpected error occurred' })}\n\n`);
+    console.error('Error connecting to backend:', error);
+    res.write(`data: ${JSON.stringify({ error: 'Failed to connect to backend' })}\n\n`);
     res.end();
   }
 }
