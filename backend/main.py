@@ -19,6 +19,7 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["Content-Disposition", "Content-Type", "Content-Length"]
 )
 
 # Include routers
@@ -28,8 +29,11 @@ app.include_router(deep_research.router, prefix="/api/deep-research", tags=["dee
 
 # Set up static files directory
 static_directory = Path(__file__).parent / "static"
+app.mount("/static", StaticFiles(directory=str(static_directory), html=True, check_dir=True), name="static")
+
+# Make sure the static directories exist
 os.makedirs(static_directory / "generated_images", exist_ok=True)
-app.mount("/static", StaticFiles(directory=str(static_directory)), name="static")
+os.makedirs(static_directory / "audio", exist_ok=True)
 
 @app.get("/")
 async def health_check():

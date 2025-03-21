@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Head from 'next/head';
 import Layout from '../components/Layout';
 import ReactMarkdown from 'react-markdown';
@@ -42,6 +42,12 @@ export default function ContentGenerator() {
       
       const data = await response.json();
       setContent(data);
+      
+      // Auto-generate images if there are prompts
+      if (data.imagePrompts && data.imagePrompts.length > 0) {
+        // Generate the first image immediately
+        handleGenerateImage(data.imagePrompts[0]);
+      }
     } catch (err) {
       console.error('Error in content generation:', err);
       setError(err.message || 'An error occurred');
@@ -55,6 +61,7 @@ export default function ContentGenerator() {
     setImageError(null);
     
     try {
+      console.log(`Generating image for prompt: ${prompt}`);
       const response = await fetch('/api/generate-image', {
         method: 'POST',
         headers: {
@@ -63,20 +70,38 @@ export default function ContentGenerator() {
         body: JSON.stringify({ prompt }),
       });
       
+      // Check if the response is OK first
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to generate image');
+        const errorText = await response.text();
+        console.error('Error response from API:', response.status, errorText);
+        throw new Error(`API error: ${response.status} - ${errorText}`);
       }
       
-      const data = await response.json();
+      // Parse response JSON - clone response to avoid "body already read" error
+      const data = await response.clone().json().catch(e => {
+        console.error('JSON parsing error:', e);
+        throw new Error('Failed to parse API response');
+      });
       
-      if (data.success) {
-        setGeneratedImages({
-          ...generatedImages,
+      console.log('Received image generation response:', data);
+      
+      if (data && data.success) {
+        console.log(`Successfully generated image with URL: ${data.image_url}`);
+        
+        // Verify we have a valid image URL
+        if (!data.image_url) {
+          throw new Error('No image URL returned from API');
+        }
+        
+        // Immediately update state with the image URL
+        setGeneratedImages(prevState => ({
+          ...prevState,
           [prompt]: data.image_url
-        });
+        }));
       } else {
-        throw new Error(data.error || 'Failed to generate image');
+        const errorMsg = data?.error || 'Failed to generate image';
+        console.error('API reported failure:', errorMsg);
+        throw new Error(errorMsg);
       }
     } catch (err) {
       console.error('Error in image generation:', err);
@@ -85,6 +110,22 @@ export default function ContentGenerator() {
       setGeneratingImage(false);
     }
   };
+
+  // Add this useEffect to automatically generate all images when content changes
+  useEffect(() => {
+    const generateAllImages = async () => {
+      if (content && content.imagePrompts && content.imagePrompts.length > 0) {
+        // Generate all images in sequence
+        for (const prompt of content.imagePrompts) {
+          if (!generatedImages[prompt]) {
+            await handleGenerateImage(prompt);
+          }
+        }
+      }
+    };
+    
+    generateAllImages();
+  }, [content]);
 
   return (
     <Layout>
@@ -183,29 +224,46 @@ export default function ContentGenerator() {
               
               {content.imagePrompts && content.imagePrompts.length > 0 && (
                 <div className="mt-6">
-                  <h4 className="text-lg font-semibold mb-2">Image Prompts</h4>
-                  <ul className="list-disc pl-5 space-y-3">
+                  <h4 className="text-lg font-semibold mb-2">Generated Images</h4>
+                  <div className="bg-yellow-50 border border-yellow-200 p-4 mb-4 rounded-lg">
+                    <p className="text-sm text-yellow-700">Debug info - Images to generate: {content.imagePrompts.length}, Images generated: {Object.keys(generatedImages).length}</p>
+                  </div>
+                  <ul className="list-disc pl-5 space-y-6">
                     {content.imagePrompts.map((prompt, index) => (
                       <li key={index} className="text-gray-700">
                         <div className="flex flex-col space-y-2">
-                          <div className="flex items-center">
-                            <span>{prompt}</span>
-                            <button
-                              className="ml-3 px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
-                              onClick={() => handleGenerateImage(prompt)}
-                              disabled={generatingImage}
-                            >
-                              {generatingImage && prompt in generatedImages ? 'Generating...' : 'Generate Image'}
-                            </button>
-                          </div>
-                          
-                          {generatedImages[prompt] && (
+                          <p className="font-medium">Prompt #{index + 1}</p>
+                          {generatedImages[prompt] ? (
                             <div className="mt-2">
-                              <img 
-                                src={generatedImages[prompt]} 
-                                alt={prompt} 
-                                className="max-w-full h-auto rounded border border-gray-200"
-                              />
+                              <p className="text-xs text-blue-600 mb-1">Image URL: {generatedImages[prompt]}</p>
+                              <div className="border border-gray-200 rounded shadow-md p-2 overflow-hidden">
+                                <img 
+                                  src={generatedImages[prompt]} 
+                                  alt={`Generated image for: ${prompt}`}
+                                  width={600}
+                                  height={400}
+                                  loading="lazy"
+                                  className="max-w-full h-auto rounded"
+                                  onError={(e) => {
+                                    console.error('Failed to load image:', e.target.src);
+                                    e.target.onerror = null; 
+                                    e.target.src = 'https://via.placeholder.com/400x300?text=Image+Load+Error';
+                                    e.target.className += ' border-red-500';
+                                  }}
+                                />
+                              </div>
+                              <p className="text-sm text-gray-500 mt-1">{prompt}</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col space-y-2">
+                              <p className="text-sm">{prompt}</p>
+                              <button
+                                className="self-start px-3 py-1 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
+                                onClick={() => handleGenerateImage(prompt)}
+                                disabled={generatingImage}
+                              >
+                                {generatingImage ? 'Generating...' : 'Generate Image'}
+                              </button>
                             </div>
                           )}
                         </div>
